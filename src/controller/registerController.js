@@ -1,6 +1,6 @@
 'use strict';
 
-const users = require('../model/users');
+const users = require('../model/registerModel');
 
 exports.getUsers = (req, res) => {
   users.getAll((err, results) => {
