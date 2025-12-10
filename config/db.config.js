@@ -1,20 +1,12 @@
 'use strict';
 
-const mysql = require('mysql2');
+const mysql = require('mysql2/promise');
 
-const db = mysql.createConnection({
+const db = mysql.createPool({
   host: 'localhost',
   user: 'root',
-  password: '',
-  database: 'cinema'
+  password:'',
+  database: 'cinema',
 })
-
-db.connect(function(err) {
-  if (err) {
-    console.log("Ket noi that bai", err);
-  }else {
-    console.log("Ket noi thanh cong");
-  }
-});
 
 module.exports = db;
