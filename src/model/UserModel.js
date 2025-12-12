@@ -25,6 +25,9 @@ const UserModel = {
     const [list] = await db.execute("SELECT * FROM user");
     return list || null;
   },
+  async apdatePassword(id, password) {
+    db.execute("UPDATE user SET password = ? WHERE id = ?", [password, id]);
+  }
 };
 
 module.exports = UserModel;
