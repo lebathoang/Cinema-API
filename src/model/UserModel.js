@@ -12,7 +12,9 @@ const UserModel = {
   },
 
   async getByEmail(email) {
-    const [rows] = await db.execute("SELECT * FROM user WHERE email = ?", [email]);
+    const [rows] = await db.execute("SELECT * FROM user WHERE email = ?", [
+      email,
+    ]);
     return rows[0] || null;
   },
 
@@ -25,9 +27,34 @@ const UserModel = {
     const [list] = await db.execute("SELECT * FROM user");
     return list || null;
   },
-  async apdatePassword(id, password) {
+
+  async updateUserPassword(id, password) {
     db.execute("UPDATE user SET password = ? WHERE id = ?", [password, id]);
-  }
+  },
+
+  async updateForgotPasswordToken(id, token) {
+    const createdAt = new Date().toISOString();
+    const expiresAt = new Date(Date.now() + 60 + 60 + 24 * 1000).toISOString();
+    await db.execute(
+      "INSERT INTO reset_tokens (token, created_at, expires_at, id) VALUES (?, ?, ?, ?)",
+      [token, createdAt, expiresAt, id]
+    );
+  },
+
+  async getPasswordResetToken(id) {
+    const [rows] = await db.execute(
+      "SELECT token, expires_at FROM reset_tokens WHERE id = ?",
+      [id]
+    );
+    if (!rows.length) {
+      throw new Error("Reset token not found");
+    }
+    return rows[0];
+  },
+
+  async updatePasswordResetToken(id) {
+    await db.execute("DELETE FROM reset_tokens WHERE id = ?", [id]);
+  },
 };
 
 module.exports = UserModel;
