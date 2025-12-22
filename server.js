@@ -11,7 +11,8 @@ app.use(
 );
 app.use(express.json());
 
-app.use("/users", usersRoutes);
+app.use("/api/user", userRoutes);
+app.get("/", (req, res) => res.send("Auth API is running"));
 
 app.listen(3000, () => {
   console.log("Server chay tai http://localhost:3000");
