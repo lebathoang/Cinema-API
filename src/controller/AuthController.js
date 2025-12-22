@@ -56,33 +56,9 @@ exports.login = async (req, res) => {
 
     const payload = { id: user.id, email: user.email, fullname: user.fullname };
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+    await UserModel.saveToken(token, user.id);
 
     return res.json({ message: "Login Successfull", token });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: "Server Error" });
-  }
-};
-
-exports.changePassword = async (req, res) => {
-  try {
-    const { userId, oldPassword, newPassword } = req.body;
-
-    const user = await UserModel.getById(userId);
-    if (!user) {
-      return res.status(400).json({ message: "User not exist" });
-    }
-
-    const isMatch = await bcrypt.compare(oldPassword, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: "oldPassword not correct" });
-    }
-
-    const hashpw = await bcrypt.hash(newPassword, 10);
-
-    await UserModel.updatePassword(hashpw, user.id);
-
-    return res.json({ message: "Update password successful" });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Server Error" });

@@ -12,7 +12,9 @@ const UserModel = {
   },
 
   async getByEmail(email) {
-    const [rows] = await db.execute("SELECT * FROM user WHERE email = ?", [email]);
+    const [rows] = await db.execute("SELECT * FROM user WHERE email = ?", [
+      email,
+    ]);
     return rows[0] || null;
   },
 
@@ -20,15 +22,6 @@ const UserModel = {
     const [rows] = await db.execute("SELECT * FROM user WHERE id = ?", [id]);
     return rows[0] || null;
   },
-
-  async getAll() {
-    const [list] = await db.execute("SELECT * FROM user");
-    return list || null;
-  },
-
-  async updatePassword(password, id) {
-    await db.execute("UPDATE user SET password = ? WHERE id = ?", [password, id]);
-  }
 };
 
 module.exports = UserModel;
