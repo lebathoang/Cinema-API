@@ -22,7 +22,6 @@ const UserModel = {
     const [rows] = await db.execute("SELECT * FROM user WHERE id = ?", [id]);
     return rows[0] || null;
   },
-
 };
 
 module.exports = UserModel;

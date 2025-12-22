@@ -3,7 +3,6 @@
 const UserModel = require("../model/UserModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-require('dotenv').config();
 
 const JWT_SECRET = "secret";
 const JWT_EXPIRES_IN = "1d";
@@ -57,7 +56,6 @@ exports.login = async (req, res) => {
 
     const payload = { id: user.id, email: user.email, fullname: user.fullname };
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-
     await UserModel.saveToken(token, user.id);
 
     return res.json({ message: "Login Successfull", token });
@@ -66,4 +64,3 @@ exports.login = async (req, res) => {
     return res.status(500).json({ message: "Server Error" });
   }
 };
-
