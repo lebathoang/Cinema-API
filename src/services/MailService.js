@@ -14,42 +14,28 @@ const mailTemplate = (content, buttonUrl, buttonText) => {
   return `<!DOCTYPE html>
   <html>
   <body style="text-align: center; font-family: 'Verdana', serif; color: #000;">
-    <div
-      style="
-        max-width: 400px;
-        margin: 10px;
-        background-color: #fafafa;
-        padding: 25px;
-        border-radius: 20px;
-      "
-    >
-      <p style="text-align: left;">
-        ${content}
-      </p>
-      <a href="${buttonUrl}" target="_blank">
-        <button
-          style="
-            background-color: #444394;
-            border: 0;
-            width: 200px;
-            height: 30px;
-            border-radius: 6px;
-            color: #fff;
-          "
-        >
-          ${buttonText}
-        </button>
+   <h2>${content}</h2>
+
+      <a 
+        href="${buttonUrl}" 
+        style="
+          display:inline-block;
+          margin-top:20px;
+          padding:12px 24px;
+          background:#4f46e5;
+          color:#fff;
+          text-decoration:none;
+          border-radius:6px;
+          font-weight:bold;
+        "
+      >
+        ${buttonText}
       </a>
-      <p style="text-align: left;">
-        If you are unable to click the above button, copy paste the below URL into your address bar
+
+      <p style="margin-top:30px;font-size:13px;color:#666;">
+        Link sẽ hết hạn sau 3 ngày.
       </p>
-      <a href="${buttonUrl}" target="_blank">
-          <p style="margin: 0px; text-align: left; font-size: 10px; text-decoration: none;">
-            ${buttonUrl}
-          </p>
-      </a>
-    </div>
-  </body>
+    </body>
 </html>`;
 };
 
