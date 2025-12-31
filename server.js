@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 
-const usersRoutes = require("./src/routes/registerRouter");
+const authRoutes = require("./src/routes/AuthRouter");
 
 app.use(
   cors({
@@ -11,7 +11,7 @@ app.use(
 );
 app.use(express.json());
 
-app.use("/api/user", userRoutes);
+app.use("/api/auth", authRoutes);
 app.get("/", (req, res) => res.send("Auth API is running"));
 
 app.listen(3000, () => {
