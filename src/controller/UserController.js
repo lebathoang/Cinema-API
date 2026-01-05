@@ -2,10 +2,9 @@
 
 const UserModel = require("../model/UserModel");
 const bcrypt = require("bcrypt");
-const crypto = require("crypto");
 require('dotenv').config();
 
-const { sendMailService, mailTemplate } = require("../services/MailService");
+const { sendMailService } = require("../services/MailService");
 
 exports.profile = async (req, res) => {
   try {
@@ -20,13 +19,29 @@ exports.profile = async (req, res) => {
   }
 };
 
-exports.list = async (req, res) => {
+exports.listCustomer = async (req, res) => {
   try {
-    const list = await UserModel.getAll();
-    if (list.length == 0) {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const search = req.query.search || '';
+    const offset = (page - 1) * limit;
+
+    const listCustomer = await UserModel.getListCustomer(search, limit, offset);
+    const total = await UserModel.countCustomer(search);
+
+    if (listCustomer.length == 0) {
       return res.status(404).json({ message: "List user not found" });
     }
-    return res.json({ "List user": list });
+
+    return res.json({ 
+      success: true,
+      data: listCustomer,
+      pagination: {
+        total,
+        page,
+        limit,
+      }
+     });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Server Error" });
