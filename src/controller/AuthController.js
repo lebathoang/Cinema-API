@@ -1,6 +1,7 @@
 "use strict";
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 require("dotenv").config();
 const UserModel = require("../model/UserModel");
 const { sendMailService, mailTemplate } = require("../services/MailService");
