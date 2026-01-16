@@ -33,7 +33,7 @@ const mailTemplate = (content, buttonUrl, buttonText) => {
       </a>
 
       <p style="margin-top:30px;font-size:13px;color:#666;">
-        Link sẽ hết hạn sau 3 ngày.
+        Link sẽ hết hạn sau 30 phút.
       </p>
     </body>
 </html>`;
