@@ -6,9 +6,6 @@ require("dotenv").config();
 const UserModel = require("../model/UserModel");
 const { sendMailService, mailTemplate } = require("../services/MailService");
 
-const ACTIVATION_SECRET = process.env.ACTIVATION_SECRET;
-const ACTIVATION_EXPIRES = "3d";
-
 exports.register = async (req, res) => {
   try {
     const { fullname, email, password } = req.body;
@@ -29,12 +26,15 @@ exports.register = async (req, res) => {
       password: hashpw,
       is_active: 0,
     });
+
     const payload = {
       userId: newUser.insertId,
+      email,
+      type: "activate_account",
     };
 
-    const token = jwt.sign({ payload }, ACTIVATION_SECRET, {
-      expiresIn: ACTIVATION_EXPIRES,
+    const token = jwt.sign({ payload }, process.env.ACTIVATION_SECRET, {
+      expiresIn: process.env.ACTIVATION_EXPRIES,
     });
     const activeLink = `http://localhost:3001/activate-account?token=${token}`;
 
@@ -44,12 +44,10 @@ exports.register = async (req, res) => {
       html: mailTemplate("Click ", activeLink, " to activate account"),
     });
 
-    return res.status(201).json(
-      {
-        message: "Register Successful. Please check email to activate account.",
-      },
-      { token: token }
-    );
+    return res.status(201).json({
+      message: "Register Successful. Please check email to activate account.",
+      token,
+    });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Server Error" });
@@ -67,15 +65,28 @@ exports.login = async (req, res) => {
     if (!user) {
       return res.status(401).json({ message: "Email not correct" });
     }
+
+    if (user.is_active === 0) {
+      return res.status(403).json({
+        message: "Account is not activated",
+      });
+    }
+
     const match = await bcrypt.compare(password, user.password);
 
     if (!match) {
       return res.status(401).json({ message: "password not correct" });
     }
 
-    const payload = { id: user.id, email: user.email, fullname: user.fullname };
-    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-    await UserModel.saveToken(token, user.id);
+    const payload = {
+      id: user.id,
+      email: user.email,
+      fullname: user.fullname,
+      is_active: user.is_active,
+    };
+    const token = jwt.sign(payload, process.env.ACTIVATION_SECRET, {
+      expiresIn: process.env.ACTIVATION_EXPRIES,
+    });
 
     return res.json({ message: "Login Successfull", token });
   } catch (err) {
@@ -87,32 +98,34 @@ exports.login = async (req, res) => {
 exports.activateAccount = async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      return res.status(401).json({ message: "Missing token" });
-    }
-
-    const token = authHeader.split(" ")[1];
+    const token = authHeader?.split(" ")[1];
     if (!token) {
-      return res.status(401).json({ message: "Invalid token format" });
+      return res.status(401).json({ message: "Missing token" });
     }
 
     let decoded;
     try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET);
+      decoded = jwt.verify(token, process.env.ACTIVATION_SECRET);
     } catch (err) {
       return res.status(401).json({
         message: "Token invalid or expired",
       });
     }
 
-    const { userId } = decoded;
+    const userId = decoded.payload.userId;
     if (!userId) {
-      return res.status(400).json({ message: "Invalid token payload" });
+      return res.status(400).json({ message: "Invalid userid payload" });
     }
-
     const user = await UserModel.getById(userId);
     if (!user) {
       return res.status(400).json({ message: "User not found" });
+    }
+
+    if (user.is_active === 1) {
+      return res.status(400).json({
+        success: false,
+        message: "Account has already been activated",
+      });
     }
 
     await UserModel.activateUser(userId);
@@ -124,6 +137,54 @@ exports.activateAccount = async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Server Error" });
+  }
+};
+
+exports.resendActivation = async (req, res) => {
+  try {
+    const { resendEmail } = req.body;
+
+    if (!resendEmail) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const user = await UserModel.getByEmail(resendEmail);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.is_active === 1) {
+      return res.status(409).json({
+        code: "already_activated",
+        message: "Account already activated",
+      });
+    }
+
+    const payload = {
+      userId: user.id,
+      email: user.email,
+    };
+
+    const token = jwt.sign({ payload }, process.env.ACTIVATION_SECRET, {
+      expiresIn: process.env.ACTIVATION_EXPRIES,
+    });
+
+    const activeLink = `http://localhost:3001/activate-account?token=${token}`;
+
+    await sendMailService({
+      to: resendEmail,
+      subject: "Activate Account",
+      html: mailTemplate("Click ", activeLink, " to activate your account"),
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Activation link has been sent to your email",
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
