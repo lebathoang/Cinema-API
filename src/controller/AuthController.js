@@ -1,8 +1,8 @@
 "use strict";
+require('dotenv').config();
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
-require("dotenv").config();
 const UserModel = require("../model/UserModel");
 const { sendMailService, mailTemplate } = require("../services/MailService");
 
@@ -85,7 +85,7 @@ exports.login = async (req, res) => {
       is_active: user.is_active,
     };
     const token = jwt.sign(payload, process.env.ACTIVATION_SECRET, {
-      expiresIn: process.env.ACTIVATION_EXPRIES,
+      expiresIn: process.env.ACTIVATION_EXPIRES,
     });
 
     return res.json({ message: "Login Successfull", token });
@@ -194,20 +194,22 @@ exports.forgotPassword = async (req, res) => {
 
     const user = await UserModel.getByEmail(email);
     if (!user) {
-      return res.status(404).json({ message: "Email not exist" });
+      return res.status(404).json({ success: false, message: "Email not exist" });
     }
 
-    const token = crypto.randomBytes(20).toString("hex");
+    const token = crypto.randomBytes(32).toString("hex");
     const resetToken = crypto.createHash("sha256").update(token).digest("hex");
 
     await UserModel.updateForgotPasswordToken(user.id, resetToken);
+
+    const activeLink = `http://localhost:3001/reset-password?id=${user.id}&token=${resetToken}`;
 
     const mailOptions = {
       to: email,
       subject: "Forgot Password Link",
       html: mailTemplate(
         "We have received a request to reset your password. Please reset your password using the link below.",
-        `${process.env.FRONTEND_URL}/resetPassword?id=${user.id}&token=${resetToken}`,
+        activeLink,
         "Reset Password"
       ),
     };
@@ -226,31 +228,30 @@ exports.resetPassword = async (req, res) => {
   try {
     const { password, token, id } = req.body;
     const userToken = await UserModel.getPasswordResetToken(id);
-    if (!userToken || userToken.length === 0) {
-      res.json({
+    if (!userToken) {
+      return res.status(400).json({
         success: false,
-        message: "Some problem occured!",
+        message: "Invalid reset request",
       });
     }
 
-    const currDateTime = new Date();
-    const expireAt = new Date(userToken.expire_at);
-    if (currDateTime > expireAt) {
-      res.status(400).json({
+    if (new Date() > new Date(userToken.expire_at)) {
+      return res.status(400).json({
         success: false,
         message: "Reset password link has expired",
       });
     }
+
     if (userToken.token !== token) {
-      res.status(400).json({
+      return res.status(400).json({
         success: false,
         message: "Reset password link is invalid",
       });
     }
 
-    await UserModel.updatePasswordResetToken(id);
     const hashpw = await bcrypt.hash(password, 10);
-    await UserModel.updateUserPassword(hashpw, id);
+    await UserModel.updateUserPassword(id, hashpw);
+    await UserModel.updatePasswordResetToken(id);
     res.status(200).json({
       success: true,
       message: "Your password reset was successfully",

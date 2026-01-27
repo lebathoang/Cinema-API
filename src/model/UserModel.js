@@ -39,7 +39,7 @@ const UserModel = {
   },
 
   async updateUserPassword(id, password) {
-    db.execute("UPDATE user SET password = ? WHERE id = ?", [password, id]);
+    return await db.execute("UPDATE user SET password = ? WHERE id = ?", [password, id]);
   },
 
   async updateForgotPasswordToken(id, token) {
