@@ -3,12 +3,12 @@ const router = express.Router()
 
 const AuthRouter = require('../controller/AuthController');
 
-router.post("/register", AuthController.register);
-router.post("/login", AuthController.login);
-router.post("/activate-account", AuthController.activateAccount);
-router.post("/resend-activation", AuthController.resendActivation);
-router.post("/forgot-password", AuthController.forgotPassword);
-router.post("/reset-password", AuthController.resetPassword);
+router.post("/register", AuthRouter.register);
+router.post("/login", AuthRouter.login);
+router.post("/activate-account", AuthRouter.activateAccount);
+router.post("/resend-activation", AuthRouter.resendActivation);
+router.post("/forgot-password", AuthRouter.forgotPassword);
+router.post("/reset-password", AuthRouter.resetPassword);
 
 
 module.exports = router;
