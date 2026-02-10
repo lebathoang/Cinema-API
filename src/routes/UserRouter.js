@@ -7,5 +7,4 @@ router.get('/list-customer', userRouter.listCustomer);
 router.put("/change-password", userRouter.changePassword);
 router.post("/send-mail", userRouter.sendMail);
 
-
 module.exports = router;

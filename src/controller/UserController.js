@@ -8,20 +8,21 @@ const { sendMailService } = require("../services/MailService");
 
 exports.profile = async (req, res) => {
   try {
-    const { id } = req.params.id;
-    const customer = await UserModel.getById(id);
+    const id = req.params.id;
     
+    const customer = await UserModel.getById(id);
     if (!customer) {
       return res.status(404).json({
         success: false,
         message: "Customer not found",
       })
     }
+    const { password, email, ...safeCustomer } = customer;
 
     return res.status(200).json({
       success: true,
       message: "Get profile successfully",
-      data: customer,
+      data: safeCustomer,
     })
   } catch (err) {
     console.error(err);
