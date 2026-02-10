@@ -8,11 +8,22 @@ const { sendMailService } = require("../services/MailService");
 
 exports.profile = async (req, res) => {
   try {
-    const user = await UserModel.getById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+    const id = req.params.id;
+    
+    const customer = await UserModel.getById(id);
+    if (!customer) {
+      return res.status(404).json({
+        success: false,
+        message: "Customer not found",
+      })
     }
-    return res.json({ user });
+    const { password, email, ...safeCustomer } = customer;
+
+    return res.status(200).json({
+      success: true,
+      message: "Get profile successfully",
+      data: safeCustomer,
+    })
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Server Error" });
