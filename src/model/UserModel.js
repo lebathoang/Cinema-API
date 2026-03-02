@@ -6,7 +6,7 @@ const UserModel = {
   async create({ fullname, email, password }) {
     const [result] = await db.execute(
       "INSERT INTO user (fullname, email, password) VALUES(?, ?, ?)",
-      [fullname, email, password]
+      [fullname, email, password],
     );
     return result;
   },
@@ -23,23 +23,35 @@ const UserModel = {
     return rows[0] || null;
   },
 
+  async deleteById(id) {
+    const [result] = await db.execute("DELETE FROM customers WHERE id = ?", [
+      id,
+    ]);
+
+    return result.affectedRows;
+  },
+
   async getListCustomer(search, limit, offset) {
     const [rows] = await db.execute(
       "SELECT * FROM user WHERE fullname LIKE ? ORDER BY id DESC LIMIT ? OFFSET ?",
-      [`%${search}%`, limit, offset]
+      [`%${search}%`, limit, offset],
     );
     return rows || null;
   },
 
   async countCustomer(search) {
-    const [rows] = await db.execute("SELECT COUNT(*) AS total FROM user WHERE fullname LIKE ?", [
-      `%${search}%`,
-    ]);
+    const [rows] = await db.execute(
+      "SELECT COUNT(*) AS total FROM user WHERE fullname LIKE ?",
+      [`%${search}%`],
+    );
     return rows[0].total;
   },
 
   async updateUserPassword(id, password) {
-    return await db.execute("UPDATE user SET password = ? WHERE id = ?", [password, id]);
+    return await db.execute("UPDATE user SET password = ? WHERE id = ?", [
+      password,
+      id,
+    ]);
   },
 
   async updateForgotPasswordToken(id, token) {
@@ -47,14 +59,14 @@ const UserModel = {
     const expiresAt = new Date(Date.now() + 60 + 60 + 24 * 1000).toISOString();
     await db.execute(
       "INSERT INTO reset_tokens (token, created_at, expires_at, id) VALUES (?, ?, ?, ?)",
-      [token, createdAt, expiresAt, id]
+      [token, createdAt, expiresAt, id],
     );
   },
 
   async getPasswordResetToken(id) {
     const [rows] = await db.execute(
       "SELECT token, expires_at FROM reset_tokens WHERE id = ?",
-      [id]
+      [id],
     );
     if (!rows.length) {
       throw new Error("Reset token not found");
@@ -73,18 +85,19 @@ const UserModel = {
   async getListCustomer(search, limit, offset) {
     const [rows] = await db.execute(
       "SELECT * FROM user WHERE fullname LIKE ? ORDER BY id DESC LIMIT ? OFFSET ?",
-      [`%${search}%`, limit, offset]
+      [`%${search}%`, limit, offset],
     );
     return rows || null;
   },
 
   async countCustomer(search) {
-    const [rows] = await db.execute("SELECT COUNT(*) AS total FROM user WHERE fullname LIKE ?", [
-      `%${search}%`,
-    ]);
+    const [rows] = await db.execute(
+      "SELECT COUNT(*) AS total FROM user WHERE fullname LIKE ?",
+      [`%${search}%`],
+    );
     return rows[0].total;
   },
-  
+
   async updateUserPassword(id, password) {
     db.execute("UPDATE user SET password = ? WHERE id = ?", [password, id]);
   },
@@ -94,14 +107,14 @@ const UserModel = {
     const expiresAt = new Date(Date.now() + 60 + 60 + 24 * 1000).toISOString();
     await db.execute(
       "INSERT INTO reset_tokens (token, created_at, expires_at, id) VALUES (?, ?, ?, ?)",
-      [token, createdAt, expiresAt, id]
+      [token, createdAt, expiresAt, id],
     );
   },
 
   async getPasswordResetToken(id) {
     const [rows] = await db.execute(
       "SELECT token, expires_at FROM reset_tokens WHERE id = ?",
-      [id]
+      [id],
     );
     if (!rows.length) {
       throw new Error("Reset token not found");
@@ -111,6 +124,31 @@ const UserModel = {
 
   async updatePasswordResetToken(id) {
     await db.execute("DELETE FROM reset_tokens WHERE id = ?", [id]);
+  },
+
+  async banUserById(id, reson) {
+    const [result] = await db.execute(
+      `UPDATE user SET status = 'BANNED',
+         ban_reason = ?,
+         banned_at = NOW()
+     WHERE id = ? AND status != 'BANNED'`,
+      [reason, id],
+    );
+
+    return result.affectedRows;
+  },
+
+  async unbanUserById(id) {
+    const [result] = await db.execute(
+      `UPDATE users 
+     SET status = 'ACTIVE',
+         ban_reason = NULL,
+         banned_at = NULL
+     WHERE id = ? AND status = 'BANNED'`,
+      [id],
+    );
+
+    return result.affectedRows;
   },
 };
 

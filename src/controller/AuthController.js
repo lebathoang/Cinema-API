@@ -1,9 +1,10 @@
 "use strict";
-require('dotenv').config();
+require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const UserModel = require("../model/UserModel");
+const checkUserBanned = require("../middlewares/UserMiddleware")
 const { sendMailService, mailTemplate } = require("../services/MailService");
 
 exports.register = async (req, res) => {
@@ -76,6 +77,14 @@ exports.login = async (req, res) => {
 
     if (!match) {
       return res.status(401).json({ message: "password not correct" });
+    }
+
+    const bannedCheck = checkUserBanned(user);
+
+    if (bannedCheck.isBanned) {
+      return res.status(403).json({
+        message: bannedCheck.message,
+      });
     }
 
     const payload = {
@@ -194,7 +203,9 @@ exports.forgotPassword = async (req, res) => {
 
     const user = await UserModel.getByEmail(email);
     if (!user) {
-      return res.status(404).json({ success: false, message: "Email not exist" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Email not exist" });
     }
 
     const token = crypto.randomBytes(32).toString("hex");
@@ -210,7 +221,7 @@ exports.forgotPassword = async (req, res) => {
       html: mailTemplate(
         "We have received a request to reset your password. Please reset your password using the link below.",
         activeLink,
-        "Reset Password"
+        "Reset Password",
       ),
     };
     await sendMailService(mailOptions);

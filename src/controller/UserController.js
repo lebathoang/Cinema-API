@@ -2,20 +2,20 @@
 
 const UserModel = require("../model/UserModel");
 const bcrypt = require("bcrypt");
-require('dotenv').config();
+require("dotenv").config();
 
 const { sendMailService } = require("../services/MailService");
 
 exports.profile = async (req, res) => {
   try {
     const id = req.params.id;
-    
+
     const customer = await UserModel.getById(id);
     if (!customer) {
       return res.status(404).json({
         success: false,
         message: "Customer not found",
-      })
+      });
     }
     const { password, email, ...safeCustomer } = customer;
 
@@ -23,7 +23,7 @@ exports.profile = async (req, res) => {
       success: true,
       message: "Get profile successfully",
       data: safeCustomer,
-    })
+    });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Server Error" });
@@ -34,7 +34,7 @@ exports.listCustomer = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 5;
-    const search = req.query.search || '';
+    const search = req.query.search || "";
     const offset = (page - 1) * limit;
 
     const listCustomer = await UserModel.getListCustomer(search, limit, offset);
@@ -44,15 +44,15 @@ exports.listCustomer = async (req, res) => {
       return res.status(404).json({ message: "List user not found" });
     }
 
-    return res.json({ 
+    return res.json({
       success: true,
       data: listCustomer,
       pagination: {
         total,
         page,
         limit,
-      }
-     });
+      },
+    });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Server Error" });
@@ -108,3 +108,96 @@ exports.sendMail = async (req, res) => {
   }
 };
 
+exports.deleteCustomer = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (isNaN(id)) {
+      return res.status(400).json({
+        message: "Customer ID must be a number",
+      });
+    }
+
+    const affectedRows = await deleteCustomerById(id);
+
+    if (affectedRows === 0) {
+      return res.status(404).json({
+        message: "Customer not found",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Customer deleted successfully",
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
+exports.banUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+
+    if (isNaN(id)) {
+      return res.status(400).json({ message: "Invalid user ID" });
+    }
+
+    if (!reason) {
+      return res.status(400).json({ message: "Ban reason is required" });
+    }
+
+    const user = await UserModel.getById(id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const affectedRows = await UserModel.banUserById(id, reason);
+
+    if (affectedRows === 0) {
+      return res.status(400).json({
+        message: "User is already banned",
+      });
+    }
+
+    return res.status(200).json({
+      message: "User banned successfully",
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
+exports.unbanUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (isNaN(id)) {
+      return res.status(400).json({ message: "Invalid user ID" });
+    }
+
+    const affectedRows = await UserModel.unbanUserById(id);
+
+    if (affectedRows === 0) {
+      return res.status(400).json({
+        message: "User is not banned or not found",
+      });
+    }
+
+    return res.status(200).json({
+      message: "User unbanned successfully",
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
