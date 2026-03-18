@@ -5,7 +5,7 @@ const MovieRouter = require("../controllers/MovieController");
 
 router.get("/list-movie", MovieRouter.getMovies);
 
-// router.get("/movie/:id",MovieController.getMovieDetail);
+router.get("/movie/:id",MovieRouter.getMovieDetail);
 
 // router.post("/create-movie",auth,MovieController.createMovie);
 

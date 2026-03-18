@@ -10,15 +10,39 @@ exports.createMovie = async (title, description, poster) => {
 };
 
 exports.getMovieById = async (id) => {
-  const [rows] = await db.execute(`SELECT * FROM ${Movie.table} WHERE id=?`, [
-    id,
-  ]);
+  const [[movie]] = await db.execute(`SELECT * FROM movies WHERE id = ?`, [id]);
 
-  return rows[0] || null;
+  if (!movie) return null;
+
+  // genres
+  const [genres] = await db.execute(
+    `
+    SELECT g.name 
+    FROM genres g
+    JOIN movie_genres mg ON g.id = mg.genre_id
+    WHERE mg.movie_id = ?
+    `,
+    [id],
+  );
+
+  // showtimes
+  const [showtimes] = await db.execute(
+    `
+    SELECT start_time, end_time
+    FROM showtimes
+    WHERE movie_id = ?
+    `,
+    [id],
+  );
+
+  return {
+    ...movie,
+    genres: genres.map((g) => g.name),
+    showtimes,
+  };
 };
 
 exports.getMovies = async (search, limit, offset) => {
-
   const [rows] = await db.execute(
     `SELECT 
         m.*,

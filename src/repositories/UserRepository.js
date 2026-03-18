@@ -4,7 +4,7 @@ const User = require("../models/UserModel");
 exports.createUser = async ({ fullname, email, password }) => {
   const [result] = await db.execute(
     `INSERT INTO ${User.table} (fullname,email,password,is_active) VALUES (?,?,?,0)`,
-    [fullname, email, password]
+    [fullname, email, password],
   );
   return result;
 };
@@ -12,62 +12,63 @@ exports.createUser = async ({ fullname, email, password }) => {
 exports.getByEmail = async (email) => {
   const [rows] = await db.execute(
     `SELECT * FROM ${User.table} WHERE email = ?`,
-    [email]
+    [email],
   );
   return rows[0] || null;
 };
 
 exports.getById = async (id) => {
-  const [rows] = await db.execute(
-    `SELECT * FROM ${User.table} WHERE id = ?`,
-    [id]
-  );
+  const [rows] = await db.execute(`SELECT * FROM ${User.table} WHERE id = ?`, [
+    id,
+  ]);
   return rows[0] || null;
 };
 
 exports.activateUser = async (id) => {
-  await db.execute(
-    `UPDATE ${User.table} SET is_active = 1 WHERE id = ?`,
-    [id]
-  );
+  await db.execute(`UPDATE ${User.table} SET is_active = 1 WHERE id = ?`, [id]);
 };
 
 exports.updatePassword = async (id, password) => {
-  await db.execute(
-    `UPDATE ${User.table} SET password = ? WHERE id = ?`,
-    [password, id]
-  );
+  await db.execute(`UPDATE ${User.table} SET password = ? WHERE id = ?`, [
+    password,
+    id,
+  ]);
 };
 
-exports.saveResetToken = async (id, token) => {
+exports.saveResetToken = async (userId, token) => {
   const createdAt = new Date();
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
   await db.execute(
-    `INSERT INTO ${User.resetTokenTable} (token,created_at,expires_at,id) VALUES (?,?,?,?)`,
-    [token, createdAt, expiresAt, id]
+    `INSERT INTO ${User.resetTokenTable} (user_id, token, created_at, expires_at)
+     VALUES (?, ?, ?, ?)`,
+    [userId, token, createdAt, expiresAt],
   );
 };
 
-exports.getResetToken = async (id) => {
+exports.getResetToken = async (userId) => {
   const [rows] = await db.execute(
-    `SELECT token,expires_at FROM ${User.resetTokenTable} WHERE id = ?`,
-    [id]
+    `SELECT token, expires_at 
+     FROM ${User.resetTokenTable}
+     WHERE user_id = ?`,
+    [userId],
   );
+
   return rows[0] || null;
 };
 
-exports.deleteResetToken = async (id) => {
+exports.deleteResetToken = async (userId) => {
   await db.execute(
-    `DELETE FROM ${User.resetTokenTable} WHERE id = ?`,
-    [id]
+    `DELETE FROM ${User.resetTokenTable}
+     WHERE user_id = ?`,
+    [userId],
   );
 };
 
 exports.getListCustomer = async (search, limit, offset) => {
   const [rows] = await db.execute(
     `SELECT * FROM ${User.table} WHERE fullname LIKE ? ORDER BY id DESC LIMIT ? OFFSET ?`,
-    [`%${search}%`, limit, offset]
+    [`%${search}%`, limit, offset],
   );
   return rows;
 };
@@ -75,7 +76,7 @@ exports.getListCustomer = async (search, limit, offset) => {
 exports.countCustomer = async (search) => {
   const [rows] = await db.execute(
     `SELECT COUNT(*) AS total FROM ${User.table} WHERE fullname LIKE ?`,
-    [`%${search}%`]
+    [`%${search}%`],
   );
   return rows[0].total;
 };
@@ -85,7 +86,7 @@ exports.banUser = async (id, reason) => {
     `UPDATE ${User.table} 
      SET status='BANNED',ban_reason=?,banned_at=NOW()
      WHERE id=?`,
-    [reason, id]
+    [reason, id],
   );
 
   return result.affectedRows;
@@ -96,7 +97,7 @@ exports.unbanUser = async (id) => {
     `UPDATE ${User.table} 
      SET status='ACTIVE',ban_reason=NULL,banned_at=NULL
      WHERE id=?`,
-    [id]
+    [id],
   );
 
   return result.affectedRows;

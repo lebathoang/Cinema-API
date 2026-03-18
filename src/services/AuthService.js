@@ -50,7 +50,7 @@ exports.register = async ({ fullname, email, password }) => {
 
 exports.login = async ({ email, password }) => {
   const user = await UserRepo.getByEmail(email);
-  
+
   if (!user) {
     throw new Error("EMAIL_NOT_FOUND");
   }
@@ -60,7 +60,7 @@ exports.login = async ({ email, password }) => {
   }
 
   const match = await bcrypt.compare(password, user.password);
-  
+
   if (!match) {
     throw new Error("PASSWORD_WRONG");
   }
@@ -164,14 +164,14 @@ exports.resetPassword = async ({ id, token, password }) => {
   if (new Date() > new Date(resetToken.expires_at)) {
     throw new Error("TOKEN_EXPIRED");
   }
-
+  
   if (resetToken.token !== token) {
     throw new Error("INVALID_TOKEN");
   }
-
+  
   const hashpw = await bcrypt.hash(password, 10);
-
+  
   await UserRepo.updatePassword(id, hashpw);
-
+  
   await UserRepo.deleteResetToken(id);
 };

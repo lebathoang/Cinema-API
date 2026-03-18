@@ -16,7 +16,7 @@ exports.register = async (req, res) => {
 
     if (err.message === "EMAIL_EXIST") {
       return res.status(409).json({
-        message: "Email already exists",
+        message: "Email đã tồn tại",
       });
     }
 
@@ -60,15 +60,23 @@ exports.login = async (req, res) => {
 
 exports.forgotPassword = async (req, res) => {
   try {
-    const token = AuthService.forgotPassword(req.body);
+    const { email } = req.body;
+
+    await AuthService.forgotPassword(email);
 
     res.status(200).json({
       success: true,
       message: "A password reset link has been sent to your email.",
     });
   } catch (err) {
+    if (err.message === "EMAIL_NOT_FOUND") {
+      return res.status(404).json({
+        message: "Email not found",
+      });
+    }
+
     console.error(err);
-    return res.status(500).json({ message: "Server Error" });
+    res.status(500).json({ message: "Server Error" });
   }
 };
 
@@ -128,14 +136,29 @@ exports.resendActivation = async (req, res) => {
 
 exports.resetPassword = async (req, res) => {
   try {
-    const token = AuthService.resetPassword(req.body);
+    const { id, token, password } = req.body;
+
+    if (!id || !token || !password) {
+      return res.status(400).json({
+        message: "Missing required fields",
+      });
+    }
+
+    await AuthService.resetPassword({ id, token, password });
 
     res.status(200).json({
       success: true,
-      message: "Your password reset was successfully",
+      message: "Your password reset was successful",
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: "Server error" });
+    if (err.message === "INVALID_TOKEN") {
+      return res.status(400).json({ message: "Invalid token" });
+    }
+
+    if (err.message === "TOKEN_EXPIRED") {
+      return res.status(400).json({ message: "Token expired" });
+    }
+
+    res.status(500).json({ message: "Server error" });
   }
 };
