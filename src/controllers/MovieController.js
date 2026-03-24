@@ -26,6 +26,21 @@ exports.getMovies = async (req, res, next) => {
   }
 };
 
+exports.getRandomMovies = async (req, res, next) => {
+  try {
+    const limit = parseInt(req.query.limit) || 10;
+
+    const movies = await MovieService.getRandomMovies(limit);
+
+    res.json({
+      success: true,
+      data: movies,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.getMovieDetail = async (req, res, next) => {
   try {
     const movie = await MovieService.getMovieDetail(req.params.id);

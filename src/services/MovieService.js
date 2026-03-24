@@ -1,53 +1,60 @@
 const MovieRepo = require("../repositories/MovieRepository");
 const { getPagination } = require("../utils/PaginationUtil");
 
-exports.createMovie = async(data)=>{
+exports.createMovie = async (data) => {
+  const { title, description, poster } = data;
 
-  const {title,description,poster}=data;
-
-  await MovieRepo.createMovie(title,description,poster);
+  await MovieRepo.createMovie(title, description, poster);
 };
 
-exports.getMovieList = async(query)=>{
+exports.getMovieList = async (query) => {
+  const { page, limit, offset } = getPagination(query);
+  const search = query.search || "";
 
-  const {page,limit,offset}=getPagination(query);
-  const search=query.search||"";
+  const movies = await MovieRepo.getMovies(search, limit, offset);
 
-  const movies = await MovieRepo.getMovies(search,limit,offset);
-
-  const formattedMovies = movies.map(movie => ({
+  const formattedMovies = movies.map((movie) => ({
     ...movie,
-    genres: movie.genres ? movie.genres.split(",") : []
+    genres: movie.genres ? movie.genres.split(",") : [],
   }));
 
   const total = await MovieRepo.countMovies(search);
 
-  return{
-    data:formattedMovies,
-    pagination:{
+  return {
+    data: formattedMovies,
+    pagination: {
       page,
       limit,
-      total
-    }
+      total,
+    },
   };
 };
 
-exports.getMovieDetail = async(id)=>{
-
+exports.getMovieDetail = async (id) => {
   const movie = await MovieRepo.getMovieById(id);
 
-  if(!movie){
+  if (!movie) {
     throw new Error("Movie not found");
   }
 
   return movie;
 };
 
-exports.deleteMovie = async(id)=>{
+exports.getRandomMovies = async (limit) => {
+  const movies = await MovieRepo.getRandomMovies(limit);
 
+  const formattedMovies = movies.map((movie) => ({
+    ...movie,
+    genres: movie.genres ? movie.genres.split(",") : [],
+  }));
+
+  return formattedMovies
+};
+
+exports.deleteMovie = async (id) => {
   const affected = await MovieRepo.deleteMovie(id);
 
-  if(affected===0){
+  if (affected === 0) {
     throw new Error("Movie not found");
   }
 };
