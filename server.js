@@ -8,6 +8,7 @@ const movieRoutes = require("./src/routes/MovieRouter");
 const seatRoutes = require("./src/routes/SeatRouter");
 const OrderRoutes = require("./src/routes/OrderRouter");
 const PaymentRoutes = require("./src/routes/PaymentRouter");
+const CinemaRoutes = require("./src/routes/CinemaRouter");
 
 app.use(
   cors({
@@ -25,6 +26,7 @@ app.use("/api/movies", movieRoutes);
 app.use("/api/seat", seatRoutes)
 app.use("/api/order", OrderRoutes)
 app.use("/api/payment", PaymentRoutes)
+app.use("/api/cinemas", CinemaRoutes)
 app.get("/", (req, res) => res.send("Auth API is running"));
 
 app.listen(5000, () => {
