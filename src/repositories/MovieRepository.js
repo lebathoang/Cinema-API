@@ -31,7 +31,7 @@ exports.getMovieById = async (id) => {
   // showtimes
   const [showtimes] = await db.execute(
     `
-    SELECT start_time, end_time
+    SELECT start_time
     FROM ${Movie.showtimes}
     WHERE movie_id = ?
     `,
@@ -161,4 +161,45 @@ exports.suggestMovies = async (keyword) => {
     ...row,
     genres: row.genres ? row.genres.split(",") : [],
   }));
+};
+
+exports.getMoviesByDate = async (date) => {
+  const query = `
+    SELECT
+      m.*,
+      GROUP_CONCAT(DISTINCT g.name) AS ${Movie.genres}
+    FROM ${Movie.movies} m
+    INNER JOIN ${Movie.showtimes} s ON s.movie_id = m.id
+    LEFT JOIN ${Movie.movie_genres} mg ON mg.movie_id = m.id
+    LEFT JOIN ${Movie.genres} g ON g.id = mg.genre_id
+    WHERE DATE(s.start_time) = ?
+    GROUP BY m.id
+    ORDER BY MIN(s.start_time) ASC, m.id ASC
+  `;
+
+  const [rows] = await db.execute(query, [date]);
+  return rows;
+};
+
+exports.getShowtimesByDate = async (date) => {
+  const query = `
+    SELECT
+      s.id,
+      s.movie_id,
+      DATE_FORMAT(s.start_time, '%Y-%m-%d %H:%i:%s') AS start_time,
+      DATE_FORMAT(s.end_time, '%Y-%m-%d %H:%i:%s') AS end_time,
+      s.price,
+      r.id AS room_id,
+      r.name AS room_name,
+      c.id AS cinema_id,
+      c.name AS cinema_name
+    FROM ${Movie.showtimes} s
+    INNER JOIN rooms r ON r.id = s.room_id
+    INNER JOIN cinemas c ON c.id = r.cinema_id
+    WHERE DATE(s.start_time) = ?
+    ORDER BY s.start_time ASC, s.id ASC
+  `;
+
+  const [rows] = await db.execute(query, [date]);
+  return rows;
 };

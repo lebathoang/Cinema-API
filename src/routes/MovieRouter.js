@@ -9,6 +9,7 @@ router.get("/movie/:id", MovieRouter.getMovieDetail);
 router.get("/search", MovieRouter.getSearchMovies);
 router.get("/suggest", MovieRouter.getSuggestMovies);
 router.get("/random-movies", MovieRouter.getRandomMovies);
+router.get("/by-date", MovieRouter.getMoviesByDate);
 router.get("/:movieId/cast", CastRouter.getMovieCast);
 
 // router.post("/create-movie",auth,MovieController.createMovie);

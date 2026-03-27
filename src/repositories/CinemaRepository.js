@@ -197,3 +197,61 @@ exports.updateCinema = async (id, cinema, featureIds) => {
 exports.deleteCinema = async (id) => {
   await db.execute(`DELETE FROM ${Cinema.cinema} WHERE id = ?`, [id]);
 };
+
+exports.getCinemaMoviesByDate = async (cinemaId, date) => {
+  const query = `
+    SELECT
+      m.*,
+      GROUP_CONCAT(DISTINCT g.name) AS genres
+    FROM movies m
+    INNER JOIN showtimes s ON s.movie_id = m.id
+    INNER JOIN rooms r ON r.id = s.room_id
+    LEFT JOIN movie_genres mg ON mg.movie_id = m.id
+    LEFT JOIN genres g ON g.id = mg.genre_id
+    WHERE r.cinema_id = ? AND DATE(s.start_time) = ?
+    GROUP BY m.id
+    ORDER BY MIN(s.start_time) ASC, m.id ASC
+  `;
+
+  const [rows] = await db.execute(query, [cinemaId, date]);
+  return rows;
+};
+
+exports.getCinemaShowtimesByDate = async (cinemaId, date) => {
+  const query = `
+    SELECT
+      s.id,
+      s.movie_id,
+      DATE_FORMAT(s.start_time, '%Y-%m-%d %H:%i:%s') AS start_time,
+      DATE_FORMAT(s.end_time, '%Y-%m-%d %H:%i:%s') AS end_time,
+      s.price,
+      r.id AS room_id,
+      r.name AS room_name,
+      c.id AS cinema_id,
+      c.name AS cinema_name
+    FROM showtimes s
+    INNER JOIN rooms r ON r.id = s.room_id
+    INNER JOIN cinemas c ON c.id = r.cinema_id
+    WHERE c.id = ? AND DATE(s.start_time) = ?
+    ORDER BY s.start_time ASC, s.id ASC
+  `;
+
+  const [rows] = await db.execute(query, [cinemaId, date]);
+  return rows;
+};
+
+exports.getCinemaShowDates = async (cinemaId) => {
+  const query = `
+    SELECT
+      DATE_FORMAT(DATE(s.start_time), '%Y-%m-%d') AS show_date,
+      COUNT(DISTINCT s.movie_id) AS total_movies
+    FROM showtimes s
+    INNER JOIN rooms r ON r.id = s.room_id
+    WHERE r.cinema_id = ?
+    GROUP BY DATE(s.start_time)
+    ORDER BY DATE(s.start_time) ASC
+  `;
+
+  const [rows] = await db.execute(query, [cinemaId]);
+  return rows;
+};

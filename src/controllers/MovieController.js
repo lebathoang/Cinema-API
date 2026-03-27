@@ -81,3 +81,32 @@ exports.getSuggestMovies = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.getMoviesByDate = async (req, res, next) => {
+  try {
+    const { date } = req.query;
+
+    if (!date) {
+      return res.status(400).json({
+        success: false,
+        message: "date is required",
+      });
+    }
+
+    const result = await MovieService.getMoviesByDate(date);
+
+    res.json({
+      success: true,
+      ...result,
+    });
+  } catch (err) {
+    if (err.message.includes("Invalid date")) {
+      return res.status(400).json({
+        success: false,
+        message: err.message,
+      });
+    }
+
+    next(err);
+  }
+};

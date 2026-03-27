@@ -75,3 +75,99 @@ exports.updateCinema = async (id, data) => {
 exports.deleteCinema = async (id) => {
   await CinemaRepo.deleteCinema(id);
 };
+
+const normalizeDate = (input) => {
+  if (!input || typeof input !== "string") {
+    return null;
+  }
+
+  const value = input.trim();
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return value;
+  }
+
+  const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+
+  if (!match) {
+    return null;
+  }
+
+  const [, day, month, year] = match;
+  return `${year}-${month}-${day}`;
+};
+
+exports.getCinemaMoviesByDate = async ({ cinemaId, date }) => {
+  const normalizedDate = normalizeDate(date);
+  const parsedCinemaId = Number(cinemaId);
+
+  if (!Number.isInteger(parsedCinemaId) || parsedCinemaId <= 0) {
+    throw new Error("Invalid cinemaId");
+  }
+
+  if (!normalizedDate) {
+    throw new Error("Invalid date. Use dd/mm/yyyy or yyyy-mm-dd");
+  }
+
+  const movies = await CinemaRepo.getCinemaMoviesByDate(
+    parsedCinemaId,
+    normalizedDate
+  );
+  const showtimes = await CinemaRepo.getCinemaShowtimesByDate(
+    parsedCinemaId,
+    normalizedDate
+  );
+
+  const showtimesByMovieId = showtimes.reduce((acc, showtime) => {
+    if (!acc[showtime.movie_id]) {
+      acc[showtime.movie_id] = [];
+    }
+
+    acc[showtime.movie_id].push({
+      id: showtime.id,
+      start_time: showtime.start_time,
+      end_time: showtime.end_time,
+      price: showtime.price,
+      room: {
+        id: showtime.room_id,
+        name: showtime.room_name,
+      },
+      cinema: {
+        id: showtime.cinema_id,
+        name: showtime.cinema_name,
+      },
+    });
+
+    return acc;
+  }, {});
+
+  return {
+    cinemaId: parsedCinemaId,
+    date: normalizedDate,
+    totalMovies: movies.length,
+    data: movies.map((movie) => ({
+      ...movie,
+      genres: movie.genres ? movie.genres.split(",") : [],
+      showtimes: showtimesByMovieId[movie.id] || [],
+    })),
+  };
+};
+
+exports.getCinemaShowDates = async (cinemaId) => {
+  const parsedCinemaId = Number(cinemaId);
+
+  if (!Number.isInteger(parsedCinemaId) || parsedCinemaId <= 0) {
+    throw new Error("Invalid cinemaId");
+  }
+
+  const dates = await CinemaRepo.getCinemaShowDates(parsedCinemaId);
+
+  return {
+    cinemaId: parsedCinemaId,
+    totalDates: dates.length,
+    data: dates.map((item) => ({
+      date: item.show_date,
+      totalMovies: Number(item.total_movies),
+    })),
+  };
+};
