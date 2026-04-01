@@ -17,11 +17,12 @@ exports.createOrder = async (userId, showTimeId, totalPrice) => {
 exports.getValidHeldSeats = async (userId, showTimeId, seatIds) => {
   const [rows] = await db.execute(
     `
-    SELECT * FROM seat_bookings
+    SELECT *
+    FROM seat_bookings
     WHERE user_id = ?
     AND show_time_id = ?
     AND seat_id IN (${seatIds.map(() => "?").join(",")})
-    AND status = 'HOLD'
+    AND status IN ('SELECTED', 'HOLD')
     AND expires_at > NOW()
     `,
     [userId, showTimeId, ...seatIds]
@@ -34,10 +35,12 @@ exports.updateSeatsToBooked = async (userId, showTimeId, seatIds) => {
   await db.execute(
     `
     UPDATE seat_bookings
-    SET status = 'BOOKED'
+    SET status = 'BOOKED', expires_at = NULL
     WHERE user_id = ?
     AND show_time_id = ?
     AND seat_id IN (${seatIds.map(() => "?").join(",")})
+    AND status IN ('SELECTED', 'HOLD')
+    AND expires_at > NOW()
     `,
     [userId, showTimeId, ...seatIds]
   );
@@ -52,4 +55,18 @@ exports.updateOrderStatus = async (orderId, status) => {
     `,
     [status, orderId]
   );
+};
+
+exports.getOrderById = async (orderId) => {
+  const [rows] = await db.execute(
+    `
+    SELECT *
+    FROM ${Order.table}
+    WHERE id = ?
+    LIMIT 1
+    `,
+    [orderId]
+  );
+
+  return rows[0];
 };

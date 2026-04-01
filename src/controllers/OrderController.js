@@ -8,6 +8,13 @@ exports.checkout = async (req, res, next) => {
 
     res.json(result);
   } catch (err) {
+    if (err.message === "Seats not valid or expired" || err.message === "Missing required fields") {
+      return res.status(400).json({
+        success: false,
+        message: err.message,
+      });
+    }
+
     next(err);
   }
 };

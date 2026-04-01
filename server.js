@@ -5,11 +5,12 @@ const app = express();
 const authRoutes = require("./src/routes/AuthRouter");
 const userRoutes = require("./src/routes/UserRouter");
 const movieRoutes = require("./src/routes/MovieRouter");
-const seatRoutes = require("./src/routes/SeatRouter");
+const seatRoutes = require("./src/routes/SeatBookingRouter");
 const OrderRoutes = require("./src/routes/OrderRouter");
 const PaymentRoutes = require("./src/routes/PaymentRouter");
 const CinemaRoutes = require("./src/routes/CinemaRouter");
 const OfferRoutes = require("./src/routes/OfferRouter");
+const { startSeatExpiryCleanup } = require("./src/services/SeatExpiryService");
 
 app.use(
   cors({
@@ -30,6 +31,8 @@ app.use("/api/payment", PaymentRoutes)
 app.use("/api/cinemas", CinemaRoutes)
 app.use("/api/offers", OfferRoutes)
 app.get("/", (req, res) => res.send("Auth API is running"));
+
+startSeatExpiryCleanup();
 
 app.listen(5000, () => {
   console.log("Server chay tai http://localhost:5000");

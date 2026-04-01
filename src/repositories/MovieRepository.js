@@ -31,9 +31,22 @@ exports.getMovieById = async (id) => {
   // showtimes
   const [showtimes] = await db.execute(
     `
-    SELECT start_time
-    FROM ${Movie.showtimes}
-    WHERE movie_id = ?
+    SELECT
+      s.id,
+      DATE_FORMAT(s.start_time, '%Y-%m-%d %H:%i:%s') AS start_time,
+      DATE_FORMAT(s.end_time, '%Y-%m-%d %H:%i:%s') AS end_time,
+      s.price,
+      r.id AS room_id,
+      r.name AS room_name,
+      r.total_seats,
+      c.id AS cinema_id,
+      c.name AS cinema_name
+    FROM ${Movie.showtimes} s
+    INNER JOIN rooms r ON r.id = s.room_id
+    INNER JOIN cinemas c ON c.id = r.cinema_id
+    WHERE s.movie_id = ?
+      AND s.start_time IS NOT NULL
+    ORDER BY s.start_time ASC, s.id ASC
     `,
     [id],
   );
@@ -41,7 +54,21 @@ exports.getMovieById = async (id) => {
   return {
     ...movie,
     genres: genres.map((g) => g.name),
-    showtimes,
+    showtimes: showtimes.map((showtime) => ({
+      id: showtime.id,
+      start_time: showtime.start_time,
+      end_time: showtime.end_time,
+      price: showtime.price,
+      room: {
+        id: showtime.room_id,
+        name: showtime.room_name,
+        total_seats: showtime.total_seats,
+      },
+      cinema: {
+        id: showtime.cinema_id,
+        name: showtime.cinema_name,
+      },
+    })),
   };
 };
 

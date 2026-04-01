@@ -28,11 +28,26 @@ exports.updatePaymentStatus = async (paymentId, status, transactionCode) => {
 exports.getPaymentByOrderId = async (orderId) => {
   const [rows] = await db.execute(
     `
-    SELECT * FROM ${Payment.table}
+    SELECT *
+    FROM ${Payment.table}
     WHERE order_id = ?
     LIMIT 1
     `,
     [orderId]
+  );
+
+  return rows[0];
+};
+
+exports.getPaymentById = async (paymentId) => {
+  const [rows] = await db.execute(
+    `
+    SELECT *
+    FROM ${Payment.table}
+    WHERE id = ?
+    LIMIT 1
+    `,
+    [paymentId]
   );
 
   return rows[0];
