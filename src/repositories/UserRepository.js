@@ -1,5 +1,6 @@
 const db = require("../config/db.config");
 const User = require("../models/UserModel");
+const { getLimitOffsetClause } = require("../utils/SqlUtil");
 
 exports.createUser = async ({ fullname, email, password }) => {
   const [result] = await db.execute(
@@ -77,9 +78,11 @@ exports.deleteResetToken = async (userId) => {
 };
 
 exports.getListCustomer = async (search, limit, offset) => {
+  const limitOffsetClause = getLimitOffsetClause(limit, offset);
+
   const [rows] = await db.execute(
-    `SELECT * FROM ${User.table} WHERE fullname LIKE ? ORDER BY id DESC LIMIT ? OFFSET ?`,
-    [`%${search}%`, limit, offset],
+    `SELECT * FROM ${User.table} WHERE fullname LIKE ? ORDER BY id DESC ${limitOffsetClause}`,
+    [`%${search}%`],
   );
   return rows;
 };

@@ -1,15 +1,18 @@
 const db = require("../config/db.config");
 const Offer = require("../models/OfferModel");
+const { getLimitOffsetClause } = require("../utils/SqlUtil");
 
 exports.getOffers = async (limit, offset) => {
+  const limitOffsetClause = getLimitOffsetClause(limit, offset);
+
   const query = `
     SELECT *
     FROM ${Offer.offers}
     ORDER BY id DESC
-    LIMIT ? OFFSET ?
+    ${limitOffsetClause}
   `;
 
-  const [rows] = await db.execute(query, [limit, offset]);
+  const [rows] = await db.execute(query);
   return rows;
 };
 

@@ -17,7 +17,7 @@ const uniqueFrontendOrigins = [...new Set(frontendOrigins)];
 
 const fallbackBackendUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
-  : "http://localhost:5000";
+  : "https://cinema.optimges.com";
 
 const backendPublicUrl = trimTrailingSlash(
   process.env.BACKEND_PUBLIC_URL || fallbackBackendUrl

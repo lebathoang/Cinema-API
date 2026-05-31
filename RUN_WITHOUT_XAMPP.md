@@ -10,7 +10,7 @@ Gia tri local mac dinh:
 
 - `PORT=5000`
 - `FRONTEND_URL=http://localhost:3000`
-- `BACKEND_PUBLIC_URL=http://localhost:5000`
+- `BACKEND_PUBLIC_URL=https://cinema.optimges.com`
 - `DB_HOST=127.0.0.1`
 - `DB_PORT=3307`
 - `DB_USER=root`

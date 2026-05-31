@@ -1,5 +1,6 @@
 const db = require("../config/db.config");
 const Movie = require("../models/MovieModel");
+const { getLimitClause, getLimitOffsetClause } = require("../utils/SqlUtil");
 
 exports.createMovie = async (title, description, poster) => {
   await db.execute(
@@ -73,6 +74,8 @@ exports.getMovieById = async (id) => {
 };
 
 exports.getMovies = async (search, limit, offset) => {
+  const limitOffsetClause = getLimitOffsetClause(limit, offset);
+
   const [rows] = await db.execute(
     `SELECT 
         m.*,
@@ -82,18 +85,20 @@ exports.getMovies = async (search, limit, offset) => {
         FROM ${Movie.movies}
         WHERE title LIKE ?
         ORDER BY id DESC
-        LIMIT ? OFFSET ?
+        ${limitOffsetClause}
      ) m
      LEFT JOIN ${Movie.movie_genres} mg ON mg.movie_id = m.id
      LEFT JOIN ${Movie.genres} g ON g.id = mg.genre_id
      GROUP BY m.id`,
-    [`%${search}%`, limit, offset],
+    [`%${search}%`],
   );
 
   return rows;
 };
 
 exports.getRandomMovies = async (limit = 10) => {
+  const limitClause = getLimitClause(limit);
+
   const [rows] = await db.execute(
     `SELECT 
       m.*,
@@ -103,12 +108,11 @@ exports.getRandomMovies = async (limit = 10) => {
       SELECT id
       FROM ${Movie.movies}
       ORDER BY RAND()
-      LIMIT ?
+      ${limitClause}
     ) r ON m.id = r.id
     LEFT JOIN ${Movie.movie_genres} mg ON mg.movie_id = m.id
     LEFT JOIN ${Movie.genres} g ON g.id = mg.genre_id
     GROUP BY m.id;`,
-    [limit],
   );
 
   return rows;

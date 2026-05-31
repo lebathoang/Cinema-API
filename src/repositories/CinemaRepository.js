@@ -1,5 +1,6 @@
 const db = require("../config/db.config");
 const Cinema = require("../models/CinemaModel");
+const { getLimitOffsetClause } = require("../utils/SqlUtil");
 
 exports.createCinema = async (cinema, featureIds) => {
   const { name, location, rating, image } = cinema;
@@ -38,6 +39,8 @@ exports.createCinema = async (cinema, featureIds) => {
 
 // GET ALL
 exports.getAllCinemas = async (limit, offset) => {
+  const limitOffsetClause = getLimitOffsetClause(limit, offset);
+
   const query = `
     SELECT 
       c.id,
@@ -51,10 +54,10 @@ exports.getAllCinemas = async (limit, offset) => {
     LEFT JOIN ${Cinema.feature} f ON cf.feature_id = f.id
     GROUP BY c.id
     ORDER BY c.id DESC
-    LIMIT ? OFFSET ?
+    ${limitOffsetClause}
   `;
 
-  const [rows] = await db.execute(query, [limit, offset]);
+  const [rows] = await db.execute(query);
   return rows;
 };
 
@@ -69,6 +72,7 @@ exports.countAllCinemas = async () => {
 };
 
 exports.searchCinemas = async ({ keyword = "", minRating, limit, offset }) => {
+  const limitOffsetClause = getLimitOffsetClause(limit, offset);
   const conditions = [];
   const params = [];
 
@@ -100,10 +104,10 @@ exports.searchCinemas = async ({ keyword = "", minRating, limit, offset }) => {
     ${whereClause}
     GROUP BY c.id
     ORDER BY c.rating DESC, c.name ASC
-    LIMIT ? OFFSET ?
+    ${limitOffsetClause}
   `;
 
-  const [rows] = await db.execute(query, [...params, limit, offset]);
+  const [rows] = await db.execute(query, params);
   return rows;
 };
 
